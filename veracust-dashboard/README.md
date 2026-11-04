@@ -1,16 +1,13 @@
 # Veracust dashboard
+Next.js 14 console for the Veracust FastAPI inference service.
 
-Next.js 14 frontend for the Veracust inference service.
-
-## Local development
-
+## Local run
 ```bash
 npm install
 cp .env.example .env.local
-# Set VERACUST_API_URL=http://localhost:8000
+# Set VERACUST_API_URL=http://127.0.0.1:8000
 npm run dev
 ```
+Open /workbench. Routes include workbench, login/signup, analysis history, and API-key management. The server-side API proxy forwards the HttpOnly access cookie to FastAPI. Supabase service-role credentials must never be placed in this app or exposed to the browser.
 
-The catch-all API route proxies requests to FastAPI and forwards the browser's authorization and visitor cookies. Keep the Supabase service-role key exclusively in the FastAPI environment. The dashboard does not receive it.
-
-The initial workbench displays the real API response and errors. It intentionally does not replace backend failures with mock verdicts. Auth screens, analysis history, API-key management UI and richer forensic visualizations remain to be imported/implemented in the next integration pass.
+The workbench uploads audio to the API and renders the actual returned evidence. It does not silently substitute mock results. History stores report metadata only; uploaded audio is temporary and deleted by the API.
