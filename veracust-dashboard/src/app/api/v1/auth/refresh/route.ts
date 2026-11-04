@@ -1,0 +1,1 @@
+import {NextRequest} from "next/server";import {authAction} from "@/lib/auth-proxy";export const POST=(r:NextRequest)=>authAction(r,"refresh");
