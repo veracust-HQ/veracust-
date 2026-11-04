@@ -33,7 +33,10 @@
 - Synthetic waveform smoke test exercised ingestion, digital, biology, physics, fusion and report construction successfully with the neural stage correctly marked unavailable.
 - Four local engine tests passed (fusion bounds, codec heuristic labeling and pipeline smoke checks).
 - Next.js dependency installation timed out in this environment. Therefore a TypeScript check and production build have not been verified.
-- Live Supabase end-to-end upload, quota concurrency/refund, API-key auth and deployment smoke tests have not been run against the connected project in this pass.
+- Connected Supabase project is ACTIVE_HEALTHY. All six Veracust tables exist with RLS enabled; the five expected migrations are recorded.
+- Live SQL verification passed: service-role table/RPC privileges are present, anon cannot read usage balances or execute credit RPCs, and API-key/usage-ledger client policies deny access. The security advisor returned no lints; performance advisor reports only unused-index INFO notices.
+- A rollback-cleaned SQL smoke test verified 1,000 -> 990 charge, idempotent charge retry, refund to 1,000, idempotent refund retry, and monthly refresh back to 1,000.
+- The Supabase project currently has no user/account rows, so real signup, owner promotion, API-key auth and full HTTP upload-to-history flow remain untested. No secret key was retrieved or placed in deployment settings.
 
 ## Important scientific distinctions
 
