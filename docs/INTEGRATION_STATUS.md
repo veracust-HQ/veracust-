@@ -1,72 +1,66 @@
 # Veracust integration status
 
-This document defines the required integration contract and prevents incomplete or heuristic components from being described as production-ready.
+## Runtime integration map
 
-## Required backend layers
-
-| Layer | Responsibility | Required output |
+| Layer | Runtime status | Current implementation and caveat |
 |---|---|---|
-| Ingestion | File validation, safe decoding, channel/sample-rate normalization, duration limits, temporary-file lifecycle | Audio descriptor, normalized waveform, metadata, validation warnings |
-| Digital gate | RIFF/container inspection, silence/entropy and spectral-grid checks, Nyquist/high-frequency checks where meaningful | Named observations, measurements, limitations; never a binary verdict alone |
-| Physical/acoustic forensics | LPC/residual, modified group delay, jitter/shimmer and relevant acoustic/production-chain features | Feature values, quality flags, unavailable reasons |
-| Voice/biological forensics | Voice-production and vocal-consistency analysis | Feature values and quality flags; no overclaiming biological certainty |
-| Neural classifier | Pretrained SSL speech encoder plus trained classifier; optional RawBoost augmentation during training | Logits/probability only with model/checkpoint identity and calibration status |
-| Codec-aware fusion | Reliability-aware combination of layer outputs, calibrated thresholding and abstention | Verdict, confidence semantics, contributing evidence, model/policy versions |
-| Report persistence | Persist result metadata and evidence summary without storing uploaded audio | Analysis record and audit metadata |
-
-## Important implementation distinctions
-
-- **Implemented** means code exists and is called by the runtime path.
-- **Connected** means the preceding and following stages exchange validated, typed data.
-- **Trained** means a compatible checkpoint was produced from a documented dataset and training run.
-- **Validated** means independent speaker/generator-held-out evaluation and calibration have been completed.
-
-A file existing in the repository does not establish any of these runtime or scientific properties.
-
-## Current known limitations from the available integration bundle
-
-The previously assembled bundle contains modular ingestion, digital, physics, biology, neural-model, fusion and FastAPI modules, plus a Next.js dashboard, Supabase migrations and a starter training workflow. It is an experimental integration, not a fully validated detector.
-
-Known limitations that must remain visible until resolved:
-
-1. No trained production neural checkpoint is included.
-2. The neural graph model must be audited against the intended AASIST-L architecture; an inspired implementation must not be labelled canonical AASIST-L without verification.
-3. Several forensic signals are heuristic or dependent on audio quality and codec conditions.
-4. Codec identification must not be reduced to sample-rate-only guesses.
-5. Fusion scores require calibration on independent data; an uncalibrated sigmoid is not a probability.
-6. t-DCF and threshold selection require a defined evaluation protocol and suitable bona-fide/spoof data.
-7. End-to-end API, dashboard, Supabase quota, authentication and deployment tests are still required.
-8. Training data provenance, licensing and generator coverage must be documented.
+| Ingestion | Connected | Upload allow-list and size cap; decoder, mono conversion, resampling, trimming/VAD and temporary-file handling. Content decoding remains the final format check. |
+| Digital integrity / Check 0 | Connected | Digital artifact, entropy, silence and spectral/Nyquist indicators feed the pipeline. Recording-chain effects can produce similar signals. |
+| Biological voice features | Connected | LPC and voice-periodicity/perturbation metrics; Praat-dependent values may be unavailable. Not proof of biological identity. |
+| Physical/acoustic forensics | Connected | Modified group-delay and harmonic/acoustic features are computed and included in the engine report. |
+| Neural classifier | Optional runtime hook | WavLM SSL encoder plus compact AASIST-inspired graph head loads from VERACUST_CHECKPOINT. No trained checkpoint is included yet; this is not a canonical AASIST-L claim. |
+| Codec-aware fusion | Connected, heuristic | Reliability weights discount some indicators for lossy/telephony clues. Codec clues are currently metadata/sample-rate heuristics; fusion is uncalibrated. |
+| Report persistence | Connected in API code | Supabase stores report JSON and metadata, usage and audit rows. Audio bytes are written to a temporary file and deleted in a finally block. |
+| Quotas and identity | Connected in API/SQL design | 1,000 anonymous monthly credits, 10 credits per analysis, registered customers start at zero until plans are configured, admin account is unlimited. |
+| Auth and API keys | Connected in API/dashboard | Supabase Auth via server endpoints and HttpOnly cookies; API keys are generated server-side and only their hashes are stored. |
+| Dashboard | Connected to API routes | Workbench, verdict, per-layer evidence, login/signup, report history and API-key developer hub. |
 
 ## Required end-to-end request flow
 
-1. Authenticate the user or establish the supported anonymous identity.
-2. Enforce upload limits and validate content server-side.
-3. Reserve/consume 10 credits atomically before expensive analysis; refund on a failed analysis according to the idempotent ledger policy.
-4. Write the upload to a temporary location only.
-5. Execute each available pipeline stage and record stage status.
-6. Fuse only valid outputs; include explicit unavailable/low-quality states.
-7. Persist the report and model/pipeline versions, not the uploaded audio.
-8. Delete temporary audio in a guaranteed cleanup path, including exceptions/timeouts where possible.
-9. Return a typed report to the dashboard.
-10. Verify history and credit balance using user-scoped authorization.
+1. Resolve an authenticated user, API key or anonymous browser identity.
+2. Enforce upload size and extension limits; decode/validate the audio in the ingestion layer.
+3. Create a report row and atomically charge 10 credits before inference; failed inference attempts use an idempotent refund.
+4. Decode, normalize and process the upload in temporary storage.
+5. Execute digital, biological and acoustic stages; execute neural inference only when a compatible checkpoint is configured.
+6. Fuse available evidence and persist report JSON plus engine metadata.
+7. Delete the temporary audio in a guaranteed cleanup path.
+8. Return the structured report to the Next.js workbench; history and API-key pages use authenticated API endpoints.
 
-## Original product decisions
+## Verification status (2026-11-04)
 
-- 10 credits per audio analysis, independent of audio duration, subject to server-side upload/duration caps.
-- Anonymous allowance: 1,000 credits per month.
-- Owner/admin account: unlimited usage through a trusted database role/account flag, never through possession of the Supabase secret key.
-- Supabase is the system of record for profiles, usage accounts, analyses, usage ledger, API-key metadata and subscriptions.
-- Uploaded audio is not retained after processing.
+- Python engine syntax compilation passed on the local integration snapshot.
+- FastAPI /health smoke test returned HTTP 200 on the local integration snapshot.
+- Synthetic waveform smoke test exercised ingestion, digital, biology, physics, fusion and report construction successfully with the neural stage correctly marked unavailable.
+- Four local engine tests passed (fusion bounds, codec heuristic labeling and pipeline smoke checks).
+- Next.js dependency installation timed out in this environment. Therefore a TypeScript check and production build have not been verified.
+- Live Supabase end-to-end upload, quota concurrency/refund, API-key auth and deployment smoke tests have not been run against the connected project in this pass.
+
+## Important scientific distinctions
+
+- Implemented means code exists and is called by the runtime path.
+- Connected means adjacent stages exchange data through the pipeline/API.
+- Trained means a compatible checkpoint was produced from a documented dataset and run.
+- Validated means independent speaker/generator-held-out evaluation and calibration have been completed.
+
+No trained neural checkpoint is bundled. The graph head is AASIST-inspired, not verified canonical AASIST-L. The fusion score is a heuristic score, not a calibrated probability. Codec identification is limited. Do not use the output as sole evidence for a high-impact decision.
+
+## Product and security decisions
+
+- 10 credits per audio analysis, independent of duration; upload cap is 50 MB.
+- Anonymous allowance is 1,000 credits per UTC calendar month.
+- Registered customer accounts start at zero credits until plans are configured.
+- A separate owner/admin account is unlimited through a database role/account type, never through possession of the Supabase secret key.
+- Supabase is the system of record for profiles, usage accounts, analyses, usage ledger, API-key hashes and subscriptions.
+- Uploaded audio and transcripts are not retained; only report/evidence metadata is persisted.
+- Supabase service-role credentials belong only in the private FastAPI environment, never in Next.js client code or Git.
+- Payment processing is not implemented.
 
 ## Before production
 
-- Complete source import and dependency lockfiles.
-- Run Python unit tests and API integration tests.
-- Run Next.js typecheck, lint and production build.
-- Verify Supabase migrations, RLS policies and RPC permissions in the target project.
-- Test quota concurrency, idempotency, refunds, monthly refresh and admin exemption.
-- Test audio cleanup on success and every failure path.
-- Train a checkpoint and run held-out speaker and generator evaluation.
-- Calibrate decision thresholds and document operating characteristics.
-- Configure deployment secrets only in the backend hosting environment.
+- Install frontend dependencies and run npm run typecheck and npm run build.
+- Run Python tests from the actual checked-out branch.
+- Test upload failures, concurrent quota consumption, idempotency, refunds and monthly refresh against the provisioned Supabase project.
+- Verify owner promotion and unlimited use with the real owner account.
+- Train a model using documented, licensed data and generator-disjoint test data.
+- Calibrate thresholds and report false-positive/false-negative operating characteristics.
+- Configure Render health checks, timeouts, CPU/RAM sizing and private secrets.
