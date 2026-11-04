@@ -4,7 +4,7 @@ services:
     runtime: python
     plan: free
     region: singapore
-    branch: integration/bootstrap
+    branch: main
     rootDir: veracust-engine
     buildCommand: |
       python -m pip install --upgrade pip
@@ -33,7 +33,7 @@ services:
     runtime: node
     plan: free
     region: singapore
-    branch: integration/bootstrap
+    branch: main
     rootDir: veracust-dashboard
     buildCommand: npm install --no-audit --no-fund && npm run build
     startCommand: npm start
