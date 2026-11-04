@@ -1,3 +1,7 @@
 path,label,speaker_id,generator,split,source,license
-/path/to/real.wav,0,speaker_001,bona_fide,train,dataset_name,license_identifier
-/path/to/synthetic.wav,1,speaker_001,generator_name,train,dataset_name,license_identifier
+audio/train/real_001.wav,0,speaker_train_001,bona_fide,train,verified_dataset,license_identifier
+audio/train/synth_001.wav,1,speaker_train_001,generator_A,train,verified_dataset,license_identifier
+audio/validation/real_001.wav,0,speaker_val_001,bona_fide,validation,verified_dataset,license_identifier
+audio/validation/synth_001.wav,1,speaker_val_001,generator_A,validation,verified_dataset,license_identifier
+audio/test/real_001.wav,0,speaker_test_001,bona_fide,test,verified_dataset,license_identifier
+audio/test/synth_001.wav,1,speaker_test_001,generator_held_out,test,verified_dataset,license_identifier
