@@ -9,7 +9,7 @@ export default function ForensicBreakdown({analysis}:{analysis:ForensicAnalysis}
   {id:"digital",label:"Digital integrity",Icon:Database,data:e.digitalFootprints||trace.check0||{}},
   {id:"bio",label:"Biological voice",Icon:Mic2,data:e.biologicalTelemetry||trace.biology||{}},
   {id:"physics",label:"Acoustic physics",Icon:AudioWaveform,data:trace.physics||{}},
-  {id:"deep",label:"Neural model",Icon:BrainCircuit,data:e.deepLearning||trace.deep||{}},
+  {id:"deep",label:"Neural model",Icon:BrainCircuit,data:{...(trace.deep as Record<string,unknown>||{}),...(e.deepLearning||{})}},
   {id:"fusion",label:"Evidence fusion",Icon:GitMerge,data:{scores:report.scores||{},effective_weights:report.effective_weights||{},classification:report.classification,decision_limitations:report.limitations||[]}},
   {id:"json",label:"Full report",Icon:FileJson,data:report}
  ];
