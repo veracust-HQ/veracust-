@@ -8,7 +8,7 @@ type UpstreamResult = { res: Response; data: Record<string, any>; parseError?: b
 
 async function call(action: string, body?: unknown, token?: string): Promise<UpstreamResult> {
   if (!API) throw new Error("The authentication API URL is not configured on the dashboard.");
-  const base = API.replace(/\\/$/, "");
+  const base = API.endsWith("/") ? API.slice(0, -1) : API;
   const headers = new Headers({ "Accept": "application/json", "Content-Type": "application/json" });
   if (token) headers.set("Authorization", `Bearer ${token}`);
 
