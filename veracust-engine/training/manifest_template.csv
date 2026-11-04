@@ -1,0 +1,3 @@
+path,label,speaker_id,generator,split,source,license
+/path/to/real.wav,0,speaker_001,bona_fide,train,dataset_name,license_identifier
+/path/to/synthetic.wav,1,speaker_001,generator_name,train,dataset_name,license_identifier
