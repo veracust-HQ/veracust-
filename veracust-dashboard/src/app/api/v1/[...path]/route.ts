@@ -6,8 +6,10 @@ export const dynamic = "force-dynamic";
 async function proxy(req: NextRequest, context: { params: { path: string[] } }) {
   const base = process.env.VERACUST_API_URL;
   if (!base) return NextResponse.json({ detail: "VERACUST_API_URL is not configured." }, { status: 503 });
+  // This catch-all is mounted at /api/v1/[...path], while FastAPI routes
+  // are mounted at /api/v1/*. Preserve that prefix when forwarding upstream.
   const path = (context.params.path || []).join("/");
-  const url = new URL(path, base.endsWith("/") ? base : base + "/");
+  const url = new URL(`api/v1/${path}`, base.endsWith("/") ? base : base + "/");
   url.search = req.nextUrl.search;
   const headers = new Headers();
   for (const key of ["authorization", "content-type", "cookie", "idempotency-key"]) {
