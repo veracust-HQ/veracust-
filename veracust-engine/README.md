@@ -17,4 +17,4 @@ Set `VERACUST_CHECKPOINT` to load a trained classifier. Without a checkpoint the
 
 Core stages: ingestion/resampling/VAD, digital artifact checks, LPC and Praat-derived voice features, modified group delay/harmonic features, optional WavLM encoder + graph classifier, and codec-aware heuristic fusion. Codec detection currently uses limited metadata/sample-rate clues; do not treat it as full codec identification.
 
-The service requires SUPABASE_URL, SUPABASE_ANON_KEY and SUPABASE_SERVICE_ROLE_KEY to enable identity, history and quotas. The service-role key belongs only in the private API environment. Never store raw uploads as analysis history.
+The service requires SUPABASE_URL, SUPABASE_ANON_KEY and SUPABASE_SERVICE_ROLE_KEY to enable identity, history and quotas. Use a publishable key (sb_publishable_...) or legacy anon JWT for SUPABASE_ANON_KEY. Use a secret key (sb_secret_...) or legacy service_role JWT for SUPABASE_SERVICE_ROLE_KEY. The API sends the service credential in the apikey header only, so opaque secret keys are not misinterpreted as JWTs. The service-role/secret key belongs only in the private API environment.
