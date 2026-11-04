@@ -238,12 +238,15 @@ async def create_key(body: ApiKeyBody, request: Request, response: Response):
     row, uid, kind = await _identity(request, response, False)
     if kind != "user":
         raise HTTPException(401, "Sign in to create an API key.")
-    if body.expires_at and body.expires_at <= datetime.now(timezone.utc):
+    expiry = body.expires_at
+    if expiry and expiry.tzinfo is None:
+        expiry = expiry.replace(tzinfo=timezone.utc)
+    if expiry and expiry <= datetime.now(timezone.utc):
         raise HTTPException(400, "Expiry must be in the future.")
     secret = "vrc_live_" + secrets.token_urlsafe(32)
     items = await _db("POST", "api_keys", payload={"account_id": row["id"], "created_by": uid,
         "name": body.name.strip(), "key_prefix": secret[:16], "key_hash": _hash(secret),
-        "expires_at": body.expires_at.isoformat() if body.expires_at else None}, prefer="return=representation")
+        "expires_at": expiry.isoformat() if expiry else None}, prefer="return=representation")
     item = items[0]
     return {"success": True, "item": {"id": item["id"], "name": item["name"],
         "keyPrefix": item["key_prefix"], "createdAt": item["created_at"]},
