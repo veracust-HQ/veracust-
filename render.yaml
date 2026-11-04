@@ -1,0 +1,43 @@
+services:
+  - type: web
+    name: veracust-api
+    runtime: python
+    plan: free
+    region: singapore
+    branch: integration/bootstrap
+    rootDir: veracust-engine
+    buildCommand: |
+      python -m pip install --upgrade pip
+      pip install --index-url https://download.pytorch.org/whl/cpu torch torchaudio
+      pip install -r requirements.txt
+    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: VERACUST_COOKIE_SECURE
+        value: "true"
+      - key: VERACUST_MAX_UPLOAD_BYTES
+        value: "52428800"
+      - key: VERACUST_ANONYMOUS_MONTHLY_CREDITS
+        value: "1000"
+      - key: VERACUST_CORS_ORIGINS
+        value: https://veracust-dashboard.onrender.com
+  - type: web
+    name: veracust-dashboard
+    runtime: node
+    plan: free
+    region: singapore
+    branch: integration/bootstrap
+    rootDir: veracust-dashboard
+    buildCommand: npm install --no-audit --no-fund && npm run build
+    startCommand: npm start
+    autoDeploy: true
+    envVars:
+      - key: VERACUST_API_URL
+        value: https://veracust-api.onrender.com
