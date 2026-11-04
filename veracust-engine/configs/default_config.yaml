@@ -1,0 +1,38 @@
+sample_rate: 16000
+peak_dbfs: -1.0
+vad:
+  frame_ms: 25
+  hop_ms: 10
+  energy_threshold_db: -42.0
+  edge_silence_seconds: 0.30
+check0:
+  nyquist_threshold: 0.08
+  extreme_nyquist_threshold: 0.35
+  zero_run_seconds: 0.10
+  entropy_floor_bits: 1.0
+  grid_threshold: 0.18
+biology:
+  lpc_order: 16
+  frame_ms: 30
+  hop_ms: 10
+  min_f0: 60
+  max_f0: 450
+model:
+  ssl_name: microsoft/wavlm-base-plus
+  local_files_only: false
+  hidden_dim: 128
+  graph_heads: 4
+  dropout: 0.15
+  checkpoint: null
+fusion:
+  threshold: 0.50
+  sigmoid_temperature: 1.0
+  bias: 0.0
+  weights:
+    digital: 0.24
+    biology: 0.18
+    physics: 0.13
+    deep: 0.45
+  lossy_hf_discount: 0.45
+  telephony_hf_discount: 0.30
+device: auto

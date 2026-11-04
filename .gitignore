@@ -1,0 +1,40 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+
+# Model weights and datasets (store in approved artifact storage)
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.onnx
+datasets/
+data/
+artifacts/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+
+# Editors and OS
+.DS_Store
+.vscode/
+.idea/

@@ -1,0 +1,22 @@
+import Link from "next/link";
+import Sidebar from "@/components/Sidebar";
+import AuthActions from "@/components/AuthActions";
+import {Search} from "lucide-react";
+export default function AppShell({children}:{children:React.ReactNode}){
+ return <div className="min-h-screen bg-ink text-slate-100">
+  <Sidebar/>
+  <div className="lg:pl-64">
+   <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-slate-800/80 bg-[#090d14]/90 px-5 backdrop-blur-xl sm:px-8">
+    <div className="text-xs text-slate-500"><span className="hidden sm:inline">VERACUST / </span><span className="text-slate-300">Enterprise console</span></div>
+    <div className="flex items-center gap-3"><div className="hidden items-center gap-2 rounded-lg border border-slate-800 bg-slate-900/70 px-3 py-2 text-xs text-slate-500 sm:flex"><Search size={14}/> Secure workspace</div><AuthActions/></div>
+   </header>
+   <nav className="flex gap-2 overflow-x-auto border-b border-slate-800 bg-[#0b111b] px-4 py-2 lg:hidden">
+    <Link href="/workbench" className="whitespace-nowrap rounded-md px-3 py-2 text-xs text-slate-300 hover:bg-slate-800">Workbench</Link>
+    <Link href="/logs" className="whitespace-nowrap rounded-md px-3 py-2 text-xs text-slate-300 hover:bg-slate-800">Analysis history</Link>
+    <Link href="/developers" className="whitespace-nowrap rounded-md px-3 py-2 text-xs text-slate-300 hover:bg-slate-800">Developer hub</Link>
+   </nav>
+   <main className="mx-auto max-w-[1600px] px-5 py-7 sm:px-8 sm:py-9">{children}</main>
+   <footer className="border-t border-slate-800/70 px-8 py-5 text-center text-[10px] tracking-wide text-slate-600">VERACUST · PERSISTENT REPORTS · AUDIO NOT RETAINED</footer>
+  </div>
+ </div>
+}
