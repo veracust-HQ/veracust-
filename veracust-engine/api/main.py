@@ -63,9 +63,10 @@ def _hash(value: str) -> str:
 def _headers(prefer: str | None = None) -> dict[str, str]:
     if not _ready():
         raise HTTPException(503, "Supabase is not configured on the inference service.")
-    h = {"apikey": SUPABASE_SERVICE_ROLE_KEY,
-         "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
-         "Content-Type": "application/json"}
+    # Send the project secret/service-role credential only as an API key.
+    # Modern sb_secret_ keys are opaque and must NOT be sent as Bearer JWTs.
+    # Legacy service_role JWTs are also accepted in the apikey header.
+    h = {"apikey": SUPABASE_SERVICE_ROLE_KEY, "Content-Type": "application/json"}
     if prefer:
         h["Prefer"] = prefer
     return h
