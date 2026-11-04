@@ -2,17 +2,17 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 import yaml
-import numpy as np
 import torch
-from ingestion.preprocessor import load_audio
-from forensics.check0_digital import analyze_check0
-from forensics.biology import analyze_biology
-from forensics.physics import analyze_physics
-from models.ssl_encoder import SSLEncoder
-from models.aasist_l import AASISTL
-from fusion.dynamic_fusion import sniff_codec, fuse_scores, build_report
+from .ingestion.preprocessor import load_audio
+from .forensics.check0_digital import analyze_check0
+from .forensics.biology import analyze_biology
+from .forensics.physics import analyze_physics
+from .models.ssl_encoder import SSLEncoder
+from .models.aasist_l import AASISTL
+from .fusion.dynamic_fusion import sniff_codec, fuse_scores, build_report
 
 class VeracustPipeline:
+    """Orchestrates ingestion, digital, biological, acoustic, neural and fusion stages."""
     def __init__(self, config: dict[str, Any] | str | Path = "configs/default_config.yaml",
                  checkpoint: str | Path | None = None, device: str | None = None):
         if isinstance(config, (str, Path)):
@@ -49,34 +49,46 @@ class VeracustPipeline:
     def _deep_inference(self, waveform: torch.Tensor) -> tuple[float | None, dict[str, Any]]:
         if not self.model_available or self.ssl is None or self.classifier is None:
             return None, {"available": False, "reason": "No trained checkpoint configured."}
-        feats = self.ssl(waveform.to(self.device))
-        logits, attn = self.classifier(feats, return_attention=True)
-        prob = torch.sigmoid(logits).mean().item()
-        return float(prob), {"available": True,
-            "graph_attn_peak": float(attn["graph_attn_peak"].item())}
+        features = self.ssl(waveform.to(self.device))
+        logits, attention = self.classifier(features, return_attention=True)
+        probability = torch.sigmoid(logits).mean().item()
+        return float(probability), {
+            "available": True,
+            "graph_attn_peak": float(attention["graph_attn_peak"].item()),
+        }
 
     def analyze(self, audio_path: str | Path) -> dict[str, Any]:
         cfg = self.config
         record = load_audio(audio_path, int(cfg.get("sample_rate", 16000)),
-            float(cfg.get("peak_dbfs", -1.0)), cfg.get("vad", {}))
-        x = record.waveform.squeeze(0).cpu().numpy()
+                            float(cfg.get("peak_dbfs", -1.0)), cfg.get("vad", {}))
+        waveform = record.waveform.squeeze(0).cpu().numpy()
         original = record.metadata.get("original_waveform")
-        digital = analyze_check0(x, record.sample_rate,
+        digital = analyze_check0(
+            waveform, record.sample_rate,
             original.numpy() if isinstance(original, torch.Tensor) else None,
-            record.original_sample_rate, cfg.get("check0", {}))
-        biology = analyze_biology(x, record.sample_rate, cfg.get("biology", {}))
-        physics = analyze_physics(x, record.sample_rate)
+            record.original_sample_rate, cfg.get("check0", {}),
+        )
+        biology = analyze_biology(waveform, record.sample_rate, cfg.get("biology", {}))
+        physics = analyze_physics(waveform, record.sample_rate)
         codec = sniff_codec(record.metadata, record.sample_rate)
         if digital.get("hard_anomaly"):
-            deep_score, deep_meta = None, {"available": False,
-                "skipped": "deterministic extreme gate"}
+            deep_score, deep_meta = None, {
+                "available": False, "skipped": "deterministic extreme gate"
+            }
         else:
             deep_score, deep_meta = self._deep_inference(record.waveform)
-        fusion = fuse_scores(digital, biology, physics, deep_score, codec,
-            cfg.get("fusion", {}), self.model_available and deep_score is not None)
-        report = build_report(digital, biology, physics, deep_score, deep_meta,
-            codec, fusion, record.duration_seconds)
-        report["preprocessing"] = {"sample_rate": record.sample_rate,
+        fusion = fuse_scores(
+            digital, biology, physics, deep_score, codec,
+            cfg.get("fusion", {}), self.model_available and deep_score is not None,
+        )
+        report = build_report(
+            digital, biology, physics, deep_score, deep_meta,
+            codec, fusion, record.duration_seconds,
+        )
+        report["preprocessing"] = {
+            "sample_rate": record.sample_rate,
             "original_sample_rate": record.original_sample_rate,
-            "original_channels": record.original_channels, **record.metadata["trim"]}
+            "original_channels": record.original_channels,
+            **record.metadata["trim"],
+        }
         return report
